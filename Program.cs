@@ -105,7 +105,7 @@ namespace WhatsAppGroupAnalysis
                 var byPerson = sentences.GroupBy(s => s.Who.ToLowerInvariant()).OrderByDescending(g => g.Count()).ToArray();
 
                 var sb = new StringBuilder();
-                sb.AppendLine("Quem\tMsgs\tPPM\tLPP\tEPM\tMPM\tFreqCoj\tFreqMor\tFreqAft\tFreqNight");
+                sb.AppendLine("Quem\tMsgs\tPPM\tLPP\tEPM\tMPM\tFreqCoj\tFreqMor\tFreqAft\tFreqNight\tDiasPresente");
                 
                 foreach(var g in byPerson)
                 {
@@ -137,7 +137,10 @@ namespace WhatsAppGroupAnalysis
                     // Frequencia de Noite
                     var freqNight = g.Count(s => s.MomentCategory == MomentCategory.Night) / total;
 
-                    sb.AppendLine($"{g.Key}\t{total}\t{ppm:r}\t{lpp:r}\t{epm:r}\t{mpm:r}\t{freqCoj:r}\t{freqMor:r}\t{freqAft:r}\t{freqNight:r}");
+                    //Dias com participação
+                    var daysPresent = g.Select(s => s.Moment.Date).Distinct().Count();
+
+                    sb.AppendLine($"{g.Key}\t{total}\t{ppm:r}\t{lpp:r}\t{epm:r}\t{mpm:r}\t{freqCoj:r}\t{freqMor:r}\t{freqAft:r}\t{freqNight:r}\t{daysPresent}");
                 }
 
                 var fi = new FileInfo(file);
