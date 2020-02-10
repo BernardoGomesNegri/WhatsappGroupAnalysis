@@ -42,7 +42,7 @@ namespace WhatsAppGroupAnalysis
                     var currentText = lines[current];
 
                     // exemplo de linha
-                    // 02/02/2020 13:57 - Matheus Silva: Ou seja, não adianta nada
+                    // 02/02/2020 - Pessoa: Lorem Ipsum
                     if (currentText.Length < 19)
                     {
                         // Deve ser continuação de um registro anterior
