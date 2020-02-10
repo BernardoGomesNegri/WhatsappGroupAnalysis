@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "WhatsAppGroupAnalysis": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Projects\\WhatsAppGroupAnalysis\\Conversa do WhatsApp com CLÃ SELVA.txt\""
+    }
+  }
+}
