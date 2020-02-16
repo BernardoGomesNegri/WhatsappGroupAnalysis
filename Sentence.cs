@@ -20,9 +20,9 @@ namespace WhatsAppGroupAnalysis
 
         public int EmojiCount { get; private set; }
 
-        public void Calculate()
+        public void Calculate(string langString)
         {
-            if (What.Equals("<Arquivo de mídia oculto>", StringComparison.CurrentCultureIgnoreCase))
+            if (What.Equals(langString, StringComparison.CurrentCultureIgnoreCase))
             {
                 
                 IsOnlyImage = true;

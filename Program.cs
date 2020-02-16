@@ -11,6 +11,13 @@ namespace WhatsAppGroupAnalysis
 
     class Program
     {
+        public static string LangString = "<Arquivo de mídia oculto>";
+
+        public static string LangRegex = @"\d\d/\d\d/\d{4}\s\d\d:\d\d\s-\s";
+
+        public static string LangDateFormat = "dd/MM/yyyy HH:mm";
+
+        private static CultureInfo LangCulture = CultureInfo.GetCultureInfo("pt-br");
         static int Main(string[] args)
         {
             try
@@ -28,10 +35,34 @@ namespace WhatsAppGroupAnalysis
                     return 2;
                 }
 
+                //Checa língua
+
+                if (args.Length > 1)
+                {
+                    if(args[1].Substring(0, 5).ToLowerInvariant() == "lang:")
+                    {
+                        var langCode = args[1].Substring(5);
+                        switch (langCode)
+                        {
+                            case "pt": 
+                                break;
+                            case "en": 
+                                LangString = "<Media omitted>";
+                                LangRegex = @"\d{1,2}\/\d{1,2}\/\d\d,\s\d{1,2}:\d{2}\s[A,P]M\s-\s";
+                                LangDateFormat = "M/d/yy, h:mm tt";
+                                LangCulture = CultureInfo.GetCultureInfo("en-us");
+                                break;
+                            default:
+                                Console.WriteLine($"Linguagem {langCode} não suportada");
+                                return 3;
+                        }
+                    }
+                }
+
                 var lines = File.ReadAllLines(file, System.Text.Encoding.UTF8);
                 Console.WriteLine($"Lidas {lines.Length} linhas.");
 
-                var regex = new Regex(@"\d\d/\d\d/\d{4}\s\d\d:\d\d\s-\s", RegexOptions.Compiled);
+                var regex = new Regex(LangRegex, RegexOptions.Compiled);
 
                 Sentence currentSentence = null;
                 var sentences = new List<Sentence>();
@@ -54,7 +85,9 @@ namespace WhatsAppGroupAnalysis
                     else if (regex.IsMatch(currentText))
                     {
                         // Achei um novo registro!
-                        var whoAndWhat = currentText.Substring(19);
+                        var startOfWhoAndWhat = currentText.IndexOf(" - ");
+
+                        var whoAndWhat = currentText.Substring(startOfWhoAndWhat + 3);
                         var posSepator = whoAndWhat.IndexOf(':');
                         if (posSepator > 0)
                         {
@@ -70,7 +103,7 @@ namespace WhatsAppGroupAnalysis
 
                             currentSentence = new Sentence
                             {
-                                Moment = DateTime.ParseExact(currentText.Substring(0, 16), "dd/MM/yyyy HH:mm", CultureInfo.CurrentCulture),
+                                Moment = DateTime.ParseExact(currentText.Substring(0, startOfWhoAndWhat), LangDateFormat, LangCulture),
                                 Who = who,
                                 What = what
                             };
@@ -96,7 +129,7 @@ namespace WhatsAppGroupAnalysis
 
                 foreach(var s in sentences)
                 {
-                    s.Calculate();
+                    s.Calculate(LangString);
                 }
 
                 Console.WriteLine($"{sentences.Count} sentenças lidas.");
