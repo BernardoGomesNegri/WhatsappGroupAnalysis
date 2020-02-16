@@ -8,9 +8,9 @@ namespace WhatsAppGroupAnalysis
 
     class Sentence
     {
-        private static Regex CleanEmoji = new Regex(@"\p{Cs}", RegexOptions.Compiled);
+        private static readonly Regex CleanEmoji = new Regex(@"\p{Cs}", RegexOptions.Compiled);
 
-        private static char[] Delimiters = new char[] { ' ', '\r', '\n' };
+        private static readonly char[] Delimiters = new char[] { ' ', '\r', '\n' };
 
         public DateTime Moment { get; set; }
         public string Who { get; set; }

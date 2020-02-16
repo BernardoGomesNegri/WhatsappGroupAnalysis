@@ -9,6 +9,7 @@ using System.Text.RegularExpressions;
 namespace WhatsAppGroupAnalysis
 {
 
+
     class Program
     {
         public static string LangString = "<Arquivo de mídia oculto>";
@@ -22,52 +23,26 @@ namespace WhatsAppGroupAnalysis
         {
             try
             {
-                if (args.Length <= 0)
-                {
-                    Console.WriteLine("Informe o arquivo de conversa do WhatsApp.");
-                    return 1;
-                }
-                var file = args[0];
-
-                if (!File.Exists(file))
-                {
-                    Console.WriteLine($"Arquivo '{file}' não existe.");
-                    return 2;
-                }
-
+               
                 //Checa língua
-
-                if (args.Length > 1)
+                int res = ParseParms(args, out var lang, out var reportFormat, out var file);
+                if (res != 0)
                 {
-                    if(args[1].Substring(0, 5).ToLowerInvariant() == "lang:")
-                    {
-                        var langCode = args[1].Substring(5);
-                        switch (langCode)
-                        {
-                            case "pt": 
-                                break;
-                            case "en": 
-                                LangString = "<Media omitted>";
-                                LangRegex = @"\d{1,2}\/\d{1,2}\/\d\d,\s\d{1,2}:\d{2}\s[A,P]M\s-\s";
-                                LangDateFormat = "M/d/yy, h:mm tt";
-                                LangCulture = CultureInfo.GetCultureInfo("en-us");
-                                break;
-                            default:
-                                Console.WriteLine($"Linguagem {langCode} não suportada");
-                                return 3;
-                        }
-                    }
+                    return res;
                 }
                 
-
-                if (args.Length > 1)
+                switch (lang)
                 {
-                    if(args[1].StartsWith("format:"))
-                    {
-
-                    }
+                    case "pt": 
+                        break;
+                    case "en": 
+                        LangString = "<Media omitted>";
+                        LangRegex = @"\d{1,2}\/\d{1,2}\/\d\d,\s\d{1,2}:\d{2}\s[A,P]M\s-\s";
+                        LangDateFormat = "M/d/yy, h:mm tt";
+                        LangCulture = CultureInfo.GetCultureInfo("en-us");
+                        break;
                 }
-
+                 
                 var lines = File.ReadAllLines(file, System.Text.Encoding.UTF8);
                 Console.WriteLine($"Lidas {lines.Length} linhas.");
 
@@ -146,50 +121,64 @@ namespace WhatsAppGroupAnalysis
                 // Distintas Pessoas e o número de senteças
                 var byPerson = sentences.GroupBy(s => s.Who.ToLowerInvariant()).OrderByDescending(g => g.Count()).ToArray();
 
-                var sb = new StringBuilder();
-                sb.AppendLine("Quem\tMsgs\tPPM\tLPP\tEPM\tMPM\tFreqCoj\tFreqMor\tFreqAft\tFreqNight\tDiasPresente");
+                var persons = new List<Person>();
+                //
                 
                 foreach(var g in byPerson)
                 {
-                    double total = g.Count();
-                    var totalLenght = g.Sum(s => s.Lenght);
-                    var totalWords = g.Sum(s => s.Words);
+                    var p = new Person
+                    {
+                        Total = g.Count(),
+                        Name = g.Key,
+                        TotalLenght = g.Sum(s => s.Lenght),
+                        TotalWords = g.Sum(s => s.Words)
+                    };
+
+
 
                     // Letras Por Palavra
-                    var lpp = totalLenght / (double)totalWords;
+                    p.LettersPerWord = p.TotalLenght / (double)p.TotalWords;
 
                     // Palavras por Mensagem
-                    var ppm = totalWords / total;
+                    p.WordsPerMessage = p.TotalWords / (double)p.Total;
 
                     // Midia por Mensagem
-                    var mpm = g.Count(s => s.IsOnlyImage) / total;
+                    p.MediaPerMessage = g.Count(s => s.IsOnlyImage) / (double)p.Total;
 
                     // Emoji por Mensagem
-                    var epm = g.Sum(s => s.EmojiCount) / total;
+                    p.EmojisPerMessage = g.Sum(s => s.EmojiCount) / (double)p.Total;
 
                     // Frequencia de Corujão
-                    var freqCoj = g.Count(s => s.MomentCategory == MomentCategory.Corujão) / total;
+                    p.FrequenceCorujão = g.Count(s => s.MomentCategory == MomentCategory.Corujão) / (double)p.Total;
 
                     // Frequencia de Manhã
-                    var freqMor = g.Count(s => s.MomentCategory == MomentCategory.Morning) / total;
+                    p.FrequenceMorning = g.Count(s => s.MomentCategory == MomentCategory.Morning) / (double)p.Total;
 
                     // Frequencia de Tarde
-                    var freqAft = g.Count(s => s.MomentCategory == MomentCategory.Afternoon) / total;
+                    p.FrequenceAfternoon = g.Count(s => s.MomentCategory == MomentCategory.Afternoon) / (double)p.Total;
 
                     // Frequencia de Noite
-                    var freqNight = g.Count(s => s.MomentCategory == MomentCategory.Night) / total;
+                    p.FrequenceNight = g.Count(s => s.MomentCategory == MomentCategory.Night) / (double)p.Total;
 
                     //Dias com participação
-                    var daysPresent = g.Select(s => s.Moment.Date).Distinct().Count();
+                    p.DaysPresent = g.Select(s => s.Moment.Date).Distinct().Count();
 
-                    sb.AppendLine($"{g.Key}\t{total}\t{ppm:r}\t{lpp:r}\t{epm:r}\t{mpm:r}\t{freqCoj:r}\t{freqMor:r}\t{freqAft:r}\t{freqNight:r}\t{daysPresent}");
+                    persons.Add(p);
+                    
                 }
 
-                var fi = new FileInfo(file);
-                var outFile = Path.Combine(fi.DirectoryName, fi.Name + ".out.txt");
-                File.WriteAllText(outFile, sb.ToString(), Encoding.UTF8);
+                switch (reportFormat)
+                {
+                    case "excel":
+                        ExportExcel(persons, file);
+                        break;
+                    case "tsv":
+                        ExportTsv(persons, file);
+                        break;
 
-                Console.WriteLine($"Resultados em '{outFile}'");
+                }
+
+                
             }
             catch (Exception ex)
             {
@@ -197,6 +186,29 @@ namespace WhatsAppGroupAnalysis
                 return 1000;
             }
             return 0;
+        }
+
+        private static void ExportTsv(List<Person> persons, string file)
+        {
+            var fi = new FileInfo(file);
+            var outFile = Path.Combine(fi.DirectoryName, fi.Name + ".out.txt");
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Quem\tMsgs\tPPM\tLPP\tEPM\tMPM\tFreqCoj\tFreqMor\tFreqAft\tFreqNight\tDiasPresente");
+            foreach (var p in persons)
+            {
+                sb.AppendLine(p.ToString());
+            }
+
+            File.WriteAllText(outFile, sb.ToString(), Encoding.UTF8);
+
+            Console.WriteLine($"Resultados em '{outFile}'");
+        }
+
+        private static void ExportExcel(List<Person> persons, string file)
+        {
+
+            throw new NotImplementedException();
         }
 
         private static int ParseParms (string [] args, out string lang, out string reportFormat, out string fileName)
@@ -236,9 +248,26 @@ namespace WhatsAppGroupAnalysis
                 }
                 else if (p.Substring(0, 7).ToLowerInvariant() == "format:")
                 {
-
+                    var formatString = p.Substring(7).ToLowerInvariant();
+                    switch (formatString)
+                    {
+                        case "tsv":
+                        case "txt":
+                        case "text":
+                            reportFormat = "tsv";
+                            break;
+                        case "xls":
+                        case "xlsx":
+                        case "excel":
+                            reportFormat = "excel";
+                            break;
+                        default:
+                            Console.WriteLine($"Formato {formatString} não suportado");
+                            return 4;
+                    }
                 }
             }
+            return 0;
         }
     }
 }
