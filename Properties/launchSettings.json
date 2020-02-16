@@ -2,7 +2,7 @@
   "profiles": {
     "WhatsAppGroupAnalysis": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\Projects\\WhatsAppGroupAnalysisData\\ConversaTeste2.txt format:txt lang:en"
+      "commandLineArgs": "C:\\Projects\\WhatsAppGroupAnalysisData\\ConversaTeste2.txt format:xlsx lang:en"
     }
   }
 }

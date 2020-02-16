@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OfficeOpenXml;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -207,9 +208,48 @@ namespace WhatsAppGroupAnalysis
 
         private static void ExportExcel(List<Person> persons, string file)
         {
+            using (ExcelPackage excelFile = new ExcelPackage())
+            {
+                ExcelWorksheet ws = excelFile.Workbook.Worksheets.Add("Pessoas");
+                ws.Cells[1, 1].Value = "Pessoas";
 
-            throw new NotImplementedException();
-        }
+                //Header
+                ws.Cells[3, 1].Value = "Quem";
+                ws.Cells[3, 2].Value = "Mensagens";
+                ws.Cells[3, 3].Value = "Palavras por Mensagem";
+                ws.Cells[3, 4].Value = "Letras por Palavra";
+                ws.Cells[3, 5].Value = "Emojis por Mensagem";
+                ws.Cells[3, 6].Value = "Mídias por Mensagem";
+                ws.Cells[3, 7].Value = "Frequência Corujão";
+                ws.Cells[3, 8].Value = "Frequência Manhã";
+                ws.Cells[3, 9].Value = "Frequência Tarde";
+                ws.Cells[3, 10].Value = "Frequência Noite";
+                ws.Cells[3, 11].Value = "Dias Presente";
+
+                var r = 4;
+                foreach (var p in persons)
+                {
+                    ws.Cells[r, 1].Value = p.Name;
+                    ws.Cells[r, 2].Value = p.Total;
+                    ws.Cells[r, 3].Value = p.WordsPerMessage;
+                    ws.Cells[r, 4].Value = p.LettersPerWord;
+                    ws.Cells[r, 5].Value = p.EmojisPerMessage;
+                    ws.Cells[r, 6].Value = p.MediaPerMessage;
+                    ws.Cells[r, 7].Value = p.FrequenceCorujão;
+                    ws.Cells[r, 8].Value = p.FrequenceMorning;
+                    ws.Cells[r, 9].Value = p.FrequenceAfternoon;
+                    ws.Cells[r, 10].Value = p.FrequenceNight;
+                    ws.Cells[r, 11].Value = p.DaysPresent;
+                    r++;
+                }
+
+                var fi = new FileInfo(file);
+                var outFile = Path.Combine(fi.DirectoryName, fi.Name + ".out.xlsx");
+                excelFile.SaveAs(new FileInfo(outFile));
+
+                Console.WriteLine($"Resultados em '{outFile}'");
+            }
+    }
 
         private static int ParseParms (string [] args, out string lang, out string reportFormat, out string fileName)
         {
