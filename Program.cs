@@ -58,6 +58,15 @@ namespace WhatsAppGroupAnalysis
                         }
                     }
                 }
+                
+
+                if (args.Length > 1)
+                {
+                    if(args[1].StartsWith("format:"))
+                    {
+
+                    }
+                }
 
                 var lines = File.ReadAllLines(file, System.Text.Encoding.UTF8);
                 Console.WriteLine($"Lidas {lines.Length} linhas.");
@@ -188,6 +197,48 @@ namespace WhatsAppGroupAnalysis
                 return 1000;
             }
             return 0;
+        }
+
+        private static int ParseParms (string [] args, out string lang, out string reportFormat, out string fileName)
+        {
+            lang = "pt";
+            reportFormat = "excel";
+            fileName = null;
+
+            if (args.Length >= 1)
+            {
+                fileName = args[0];
+            }
+            else
+            {
+                Console.WriteLine("O primeiro parâmetro deve ser o caminho do arquivo");
+                return 1;
+            }
+
+            for (int i = 1; i < args.Length; i++)
+            {
+                var p = args[i];
+
+                if (p.Substring(0, 5).ToLowerInvariant() == "lang:")
+                {
+                    var langCode = p.Substring(5);
+                    switch (langCode)
+                    {
+                        case "pt":
+                            break;
+                        case "en":
+                            lang = "en";
+                            break;
+                        default:
+                            Console.WriteLine($"Linguagem {langCode} não suportada");
+                            return 3;
+                    }
+                }
+                else if (p.Substring(0, 7).ToLowerInvariant() == "format:")
+                {
+
+                }
+            }
         }
     }
 }
