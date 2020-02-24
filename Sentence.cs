@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -10,8 +11,9 @@ namespace WhatsAppGroupAnalysis
     {
         private static readonly Regex CleanEmoji = new Regex(@"\p{Cs}", RegexOptions.Compiled);
 
-        private static readonly char[] Delimiters = new char[] { ' ', '\r', '\n' };
+        private static readonly char[] DelimitersOne = new char[] { ' ', '\r', '\n'};
 
+        private static readonly char[] DelimitersTwo = new char[] { ' ', ' ', '\r', '\n', ';', '.', ',', '-', '–', '_', '¯', '?', '!', '\t', '/', '\\', '(', ')', '{', '}', '[', ']', '@', '=', '*', '\'', '"', '+', '“', '”', '>', '<', '`', };
         public DateTime Moment { get; set; }
         public string Who { get; set; }
         public string What { get; set; }
@@ -27,7 +29,7 @@ namespace WhatsAppGroupAnalysis
                 
                 IsOnlyImage = true;
                 Lenght = 0;
-                Words = 0;
+                WordsCount = 0;
                 return;
             }
 
@@ -36,14 +38,36 @@ namespace WhatsAppGroupAnalysis
             EmojiCount += (What.Length - clean.Length) / 2;
             
             Lenght = clean.Length;
-            Words = clean.Split(Delimiters, StringSplitOptions.RemoveEmptyEntries).Length;
+            var resultsFirst = clean.ToLowerInvariant().Split(DelimitersOne, StringSplitOptions.RemoveEmptyEntries);
+            var l = new List<string>();
+            foreach (var item in resultsFirst)
+            {
+                if(item.StartsWith("http://"))
+                {
+                    continue;
+                }
+                if (item.StartsWith("https://"))
+                {
+                    continue;
+                }
+                foreach (var w in item.Split(DelimitersTwo, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    l.Add(w);
+                }
+                
+            }
+            Words = l.ToArray();
+
+            WordsCount = Words.Length;
+            
 
             MomentCategory = Moment.GetCategory();
 
         }
         
         public int Lenght { get; private set; }
-        public int Words { get; private set; }
+        public string[] Words { get; private set; } = Array.Empty<string>();
+        public int WordsCount { get; private set; }
 
         public MomentCategory MomentCategory { get; private set; }
     }

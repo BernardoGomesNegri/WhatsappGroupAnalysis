@@ -107,14 +107,27 @@ namespace WhatsAppGroupAnalysis
                     current++;
                 }
 
+
                 if (currentSentence != null)
                 {
                     sentences.Add(currentSentence);
                 }
 
+                var popularWords = new Dictionary<string, int>();
                 foreach(var s in sentences)
                 {
                     s.Calculate(LangString);
+                    foreach (var w in s.Words)
+                    {
+                        if (popularWords.TryGetValue(w, out var count))
+                        {
+                            popularWords[w] = ++count;
+                        }
+                        else
+                        {
+                            popularWords.Add(w, 1);
+                        }
+                    }
                 }
 
                 Console.WriteLine($"{sentences.Count} sentenças lidas.");
@@ -132,7 +145,7 @@ namespace WhatsAppGroupAnalysis
                         Total = g.Count(),
                         Name = g.Key,
                         TotalLenght = g.Sum(s => s.Lenght),
-                        TotalWords = g.Sum(s => s.Words)
+                        TotalWords = g.Sum(s => s.WordsCount)
                     };
 
 
@@ -171,7 +184,7 @@ namespace WhatsAppGroupAnalysis
                 switch (reportFormat)
                 {
                     case "excel":
-                        ExportExcel(persons, file);
+                        ExportExcel(persons, popularWords, file);
                         break;
                     case "tsv":
                         ExportTsv(persons, file);
@@ -206,7 +219,7 @@ namespace WhatsAppGroupAnalysis
             Console.WriteLine($"Resultados em '{outFile}'");
         }
 
-        private static void ExportExcel(List<Person> persons, string file)
+        private static void ExportExcel(List<Person> persons, Dictionary<string, int> popularWords, string file)
         {
             using (ExcelPackage excelFile = new ExcelPackage())
             {
@@ -242,10 +255,26 @@ namespace WhatsAppGroupAnalysis
                     ws.Cells[r, 11].Value = p.DaysPresent;
                     r++;
                 }
+                ExcelWorksheet wsWords = excelFile.Workbook.Worksheets.Add("Palavras Comuns");
+                wsWords.Cells[1, 1].Value = "Palavras mais comuns";
+
+                //Header
+                wsWords.Cells[3, 1].Value = "Palavra";
+                wsWords.Cells[3, 2].Value = "Frequência";
+
+                r = 4;
+                foreach (var item in popularWords.OrderByDescending(kv => kv.Value))
+                {
+                    wsWords.Cells[r, 1].Value = item.Key;
+                    wsWords.Cells[r, 2].Value = item.Value;
+                    r++;
+                }
 
                 var fi = new FileInfo(file);
                 var outFile = Path.Combine(fi.DirectoryName, fi.Name + ".out.xlsx");
                 excelFile.SaveAs(new FileInfo(outFile));
+
+                
 
                 Console.WriteLine($"Resultados em '{outFile}'");
             }
