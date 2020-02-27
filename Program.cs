@@ -24,26 +24,26 @@ namespace WhatsAppGroupAnalysis
         {
             try
             {
-               
+
                 //Checa língua
-                int res = ParseParms(args, out var lang, out var reportFormat, out var file);
+                int res = ParseParameters(args, out var lang, out var reportFormat, out var file);
                 if (res != 0)
                 {
                     return res;
                 }
-                
+
                 switch (lang)
                 {
-                    case "pt": 
+                    case "pt":
                         break;
-                    case "en": 
+                    case "en":
                         LangString = "<Media omitted>";
                         LangRegex = @"\d{1,2}\/\d{1,2}\/\d\d,\s\d{1,2}:\d{2}\s[A,P]M\s-\s";
                         LangDateFormat = "M/d/yy, h:mm tt";
                         LangCulture = CultureInfo.GetCultureInfo("en-us");
                         break;
                 }
-                 
+
                 var lines = File.ReadAllLines(file, System.Text.Encoding.UTF8);
                 Console.WriteLine($"Lidas {lines.Length} linhas.");
 
@@ -92,7 +92,7 @@ namespace WhatsAppGroupAnalysis
                                 Who = who,
                                 What = what
                             };
-                            
+
                         }
                     }
                     else
@@ -114,7 +114,7 @@ namespace WhatsAppGroupAnalysis
                 }
 
                 var popularWords = new Dictionary<string, int>();
-                foreach(var s in sentences)
+                foreach (var s in sentences)
                 {
                     s.Calculate(LangString);
                     foreach (var w in s.Words)
@@ -137,8 +137,8 @@ namespace WhatsAppGroupAnalysis
 
                 var persons = new List<Person>();
                 //
-                
-                foreach(var g in byPerson)
+
+                foreach (var g in byPerson)
                 {
                     var p = new Person
                     {
@@ -178,7 +178,7 @@ namespace WhatsAppGroupAnalysis
                     p.DaysPresent = g.Select(s => s.Moment.Date).Distinct().Count();
 
                     persons.Add(p);
-                    
+
                 }
 
                 switch (reportFormat)
@@ -192,7 +192,7 @@ namespace WhatsAppGroupAnalysis
 
                 }
 
-                
+
             }
             catch (Exception ex)
             {
@@ -274,13 +274,13 @@ namespace WhatsAppGroupAnalysis
                 var outFile = Path.Combine(fi.DirectoryName, fi.Name + ".out.xlsx");
                 excelFile.SaveAs(new FileInfo(outFile));
 
-                
+
 
                 Console.WriteLine($"Resultados em '{outFile}'");
             }
-    }
+        }
 
-        private static int ParseParms (string [] args, out string lang, out string reportFormat, out string fileName)
+        private static int ParseParameters(string[] args, out string lang, out string reportFormat, out string fileName)
         {
             lang = "pt";
             reportFormat = "excel";
