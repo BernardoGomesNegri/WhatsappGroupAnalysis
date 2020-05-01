@@ -1,6 +1,6 @@
 # WhatsappGroupAnalysis
 
-Esse programa analisa conversa de grupos de Whatsapp e retorna métricas sobre:
+Esse programa analisa conversa de grupos de Whatsapp e Google Meet e retorna métricas sobre:
 
 * Pessoas que mais participam
 * Pessoas que enviam mais mídia (fotos, figurinhas)
@@ -19,6 +19,11 @@ lang:
 
 Define a linguagem da conversa (a linguagem do dispositivo que obteve o arquivo da conversa).
  Valores aceitos: "en", "pt".
+
+platform:
+
+Define a fonte do arquivo de conversas, se é do Google Meet ou Whatsapp. Valores aceitos: "whatsapp",
+"ws", "google-meet", "google_meet", "google"
 
 ## Observações
 
