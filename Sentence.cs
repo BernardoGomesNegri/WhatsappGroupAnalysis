@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace WhatsAppGroupAnalysis
@@ -11,9 +9,9 @@ namespace WhatsAppGroupAnalysis
     {
         private static readonly Regex CleanEmoji = new Regex(@"\p{Cs}", RegexOptions.Compiled);
 
-        private static readonly char[] DelimitersOne = new char[] { ' ', '\r', '\n'};
+        private static readonly char[] DelimitersOne = { ' ', '\r', '\n'};
 
-        private static readonly char[] DelimitersTwo = new char[] { ' ', ' ', '\r', '\n', ';', '.', ',', '-', '–', '_', '¯', '?', '!', '\t', '/', '\\', '(', ')', '{', '}', '[', ']', '@', '=', '*', '\'', '"', '+', '“', '”', '>', '<', '`', };
+        private static readonly char[] DelimitersTwo = { ' ', ' ', '\r', '\n', ';', '.', ',', '-', '–', '_', '¯', '?', '!', '\t', '/', '\\', '(', ')', '{', '}', '[', ']', '@', '=', '*', '\'', '"', '+', '“', '”', '>', '<', '`', };
         public DateTime Moment { get; set; }
         public string Who { get; set; }
         public string What { get; set; }
@@ -33,7 +31,7 @@ namespace WhatsAppGroupAnalysis
                 return;
             }
 
-            string clean = CleanEmoji.Replace(What, string.Empty);
+            var clean = CleanEmoji.Replace(What, string.Empty);
 
             EmojiCount += (What.Length - clean.Length) / 2;
             

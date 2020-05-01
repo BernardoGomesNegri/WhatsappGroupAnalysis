@@ -13,21 +13,20 @@ namespace WhatsAppGroupAnalysis
     
     class Program
     {
-        public static string LangString = "<Arquivo de mídia oculto>";
+       
 
-        public static string LangRegex = @"\d\d/\d\d/\d{4}\s\d\d:\d\d\s-\s";
+        private static CultureInfo _langCulture = CultureInfo.GetCultureInfo("pt-br");
 
-        public static string LangDateFormat = "dd/MM/yyyy HH:mm";
-
-        private static CultureInfo LangCulture = CultureInfo.GetCultureInfo("pt-br");
-
-        static int Main(string[] args)
+        private static int Main(string[] args)
         {
             try
             {
+                var langString = "<Arquivo de mídia oculto>";
+                var langRegex = @"\d\d/\d\d/\d{4}\s\d\d:\d\d\s-\s";
+                var langDateFormat = "dd/MM/yyyy HH:mm";
 
                 //Checa língua
-                int res = ParseParameters(args, out var lang, out var reportFormat, out var file, out var fileFormat);
+                var res = ParseParameters(args, out var lang, out var reportFormat, out var file, out var fileFormat);
                 if (res != 0)
                 {
                     return res;
@@ -35,20 +34,20 @@ namespace WhatsAppGroupAnalysis
 
                 switch (lang)
                 {
-                    case "pt":
+                    case Language.Pt:
                         break;
-                    case "en":
-                        LangString = "<Media omitted>";
-                        LangRegex = @"\d{1,2}\/\d{1,2}\/\d\d,\s\d{1,2}:\d{2}\s[A,P]M\s-\s";
-                        LangDateFormat = "M/d/yy, h:mm tt";
-                        LangCulture = CultureInfo.GetCultureInfo("en-us");
+                    case Language.En:
+                        langString = "<Media omitted>";
+                        langRegex = @"\d{1,2}\/\d{1,2}\/\d\d,\s\d{1,2}:\d{2}\s[A,P]M\s-\s";
+                        langDateFormat = "M/d/yy, h:mm tt";
+                        _langCulture = CultureInfo.GetCultureInfo("en-us");
                         break;
                 }
 
-                var lines = File.ReadAllLines(file, System.Text.Encoding.UTF8);
+                var lines = File.ReadAllLines(file, Encoding.UTF8);
                 Console.WriteLine($"Lidas {lines.Length} linhas.");
 
-                var regex = new Regex(LangRegex, RegexOptions.Compiled);
+                var regex = new Regex(langRegex, RegexOptions.Compiled);
 
                 Sentence currentSentence = null;
                 var sentences = new List<Sentence>();
@@ -71,14 +70,14 @@ namespace WhatsAppGroupAnalysis
                     else if (regex.IsMatch(currentText))
                     {
                         // Achei um novo registro!
-                        var startOfWhoAndWhat = currentText.IndexOf(" - ");
+                        var startOfWhoAndWhat = currentText.IndexOf(" - ", StringComparison.Ordinal);
 
                         var whoAndWhat = currentText.Substring(startOfWhoAndWhat + 3);
-                        var posSepator = whoAndWhat.IndexOf(':');
-                        if (posSepator > 0)
+                        var posSeparator = whoAndWhat.IndexOf(':');
+                        if (posSeparator > 0)
                         {
-                            var who = whoAndWhat.Substring(0, posSepator);
-                            var what = whoAndWhat.Substring(posSepator + 2);
+                            var who = whoAndWhat.Substring(0, posSeparator);
+                            var what = whoAndWhat.Substring(posSeparator + 2);
 
                             // Criar um novo registro
 
@@ -89,7 +88,7 @@ namespace WhatsAppGroupAnalysis
 
                             currentSentence = new Sentence
                             {
-                                Moment = DateTime.ParseExact(currentText.Substring(0, startOfWhoAndWhat), LangDateFormat, LangCulture),
+                                Moment = DateTime.ParseExact(currentText.Substring(0, startOfWhoAndWhat), langDateFormat, _langCulture),
                                 Who = who,
                                 What = what
                             };
@@ -117,7 +116,7 @@ namespace WhatsAppGroupAnalysis
                 var popularWords = new Dictionary<string, int>();
                 foreach (var s in sentences)
                 {
-                    s.Calculate(LangString);
+                    s.Calculate(langString);
                     foreach (var w in s.Words)
                     {
                         if (popularWords.TryGetValue(w, out var count))
@@ -133,11 +132,10 @@ namespace WhatsAppGroupAnalysis
 
                 Console.WriteLine($"{sentences.Count} sentenças lidas.");
 
-                // Distintas Pessoas e o número de senteças
+                // Distintas Pessoas e o número de sentenças
                 var byPerson = sentences.GroupBy(s => s.Who.ToLowerInvariant()).OrderByDescending(g => g.Count()).ToArray();
 
                 var persons = new List<Person>();
-                //
 
                 foreach (var g in byPerson)
                 {
@@ -157,22 +155,22 @@ namespace WhatsAppGroupAnalysis
                     // Palavras por Mensagem
                     p.WordsPerMessage = p.TotalWords / (double)p.Total;
 
-                    // Midia por Mensagem
+                    // Mídia por Mensagem
                     p.MediaPerMessage = g.Count(s => s.IsOnlyImage) / (double)p.Total;
 
                     // Emoji por Mensagem
                     p.EmojisPerMessage = g.Sum(s => s.EmojiCount) / (double)p.Total;
 
-                    // Frequencia de Corujão
+                    // Frequência de Corujão
                     p.FrequenceCorujão = g.Count(s => s.MomentCategory == MomentCategory.Corujão) / (double)p.Total;
 
-                    // Frequencia de Manhã
+                    // Frequência de Manhã
                     p.FrequenceMorning = g.Count(s => s.MomentCategory == MomentCategory.Morning) / (double)p.Total;
 
-                    // Frequencia de Tarde
+                    // Frequência de Tarde
                     p.FrequenceAfternoon = g.Count(s => s.MomentCategory == MomentCategory.Afternoon) / (double)p.Total;
 
-                    // Frequencia de Noite
+                    // Frequência de Noite
                     p.FrequenceNight = g.Count(s => s.MomentCategory == MomentCategory.Night) / (double)p.Total;
 
                     //Dias com participação
@@ -184,10 +182,10 @@ namespace WhatsAppGroupAnalysis
 
                 switch (reportFormat)
                 {
-                    case "excel":
+                    case ReportFormat.Excel:
                         ExportExcel(persons, popularWords, file);
                         break;
-                    case "tsv":
+                    case ReportFormat.TabSeparated:
                         ExportTsv(persons, file);
                         break;
 
@@ -222,71 +220,69 @@ namespace WhatsAppGroupAnalysis
 
         private static void ExportExcel(List<Person> persons, Dictionary<string, int> popularWords, string file)
         {
-            using (ExcelPackage excelFile = new ExcelPackage())
+            using var excelFile = new ExcelPackage();
+            var ws = excelFile.Workbook.Worksheets.Add("Pessoas");
+            ws.Cells[1, 1].Value = "Pessoas";
+
+            //Header
+            ws.Cells[3, 1].Value = "Quem";
+            ws.Cells[3, 2].Value = "Mensagens";
+            ws.Cells[3, 3].Value = "Palavras por Mensagem";
+            ws.Cells[3, 4].Value = "Letras por Palavra";
+            ws.Cells[3, 5].Value = "Emojis por Mensagem";
+            ws.Cells[3, 6].Value = "Mídias por Mensagem";
+            ws.Cells[3, 7].Value = "Frequência Corujão";
+            ws.Cells[3, 8].Value = "Frequência Manhã";
+            ws.Cells[3, 9].Value = "Frequência Tarde";
+            ws.Cells[3, 10].Value = "Frequência Noite";
+            ws.Cells[3, 11].Value = "Dias Presente";
+
+            var r = 4;
+            foreach (var p in persons)
             {
-                ExcelWorksheet ws = excelFile.Workbook.Worksheets.Add("Pessoas");
-                ws.Cells[1, 1].Value = "Pessoas";
-
-                //Header
-                ws.Cells[3, 1].Value = "Quem";
-                ws.Cells[3, 2].Value = "Mensagens";
-                ws.Cells[3, 3].Value = "Palavras por Mensagem";
-                ws.Cells[3, 4].Value = "Letras por Palavra";
-                ws.Cells[3, 5].Value = "Emojis por Mensagem";
-                ws.Cells[3, 6].Value = "Mídias por Mensagem";
-                ws.Cells[3, 7].Value = "Frequência Corujão";
-                ws.Cells[3, 8].Value = "Frequência Manhã";
-                ws.Cells[3, 9].Value = "Frequência Tarde";
-                ws.Cells[3, 10].Value = "Frequência Noite";
-                ws.Cells[3, 11].Value = "Dias Presente";
-
-                var r = 4;
-                foreach (var p in persons)
-                {
-                    ws.Cells[r, 1].Value = p.Name;
-                    ws.Cells[r, 2].Value = p.Total;
-                    ws.Cells[r, 3].Value = p.WordsPerMessage;
-                    ws.Cells[r, 4].Value = p.LettersPerWord;
-                    ws.Cells[r, 5].Value = p.EmojisPerMessage;
-                    ws.Cells[r, 6].Value = p.MediaPerMessage;
-                    ws.Cells[r, 7].Value = p.FrequenceCorujão;
-                    ws.Cells[r, 8].Value = p.FrequenceMorning;
-                    ws.Cells[r, 9].Value = p.FrequenceAfternoon;
-                    ws.Cells[r, 10].Value = p.FrequenceNight;
-                    ws.Cells[r, 11].Value = p.DaysPresent;
-                    r++;
-                }
-                ExcelWorksheet wsWords = excelFile.Workbook.Worksheets.Add("Palavras Comuns");
-                wsWords.Cells[1, 1].Value = "Palavras mais comuns";
-
-                //Header
-                wsWords.Cells[3, 1].Value = "Palavra";
-                wsWords.Cells[3, 2].Value = "Frequência";
-
-                r = 4;
-                foreach (var item in popularWords.OrderByDescending(kv => kv.Value))
-                {
-                    wsWords.Cells[r, 1].Value = item.Key;
-                    wsWords.Cells[r, 2].Value = item.Value;
-                    r++;
-                }
-
-                var fi = new FileInfo(file);
-                var outFile = Path.Combine(fi.DirectoryName, fi.Name + ".out.xlsx");
-                excelFile.SaveAs(new FileInfo(outFile));
-
-
-
-                Console.WriteLine($"Resultados em '{outFile}'");
+                ws.Cells[r, 1].Value = p.Name;
+                ws.Cells[r, 2].Value = p.Total;
+                ws.Cells[r, 3].Value = p.WordsPerMessage;
+                ws.Cells[r, 4].Value = p.LettersPerWord;
+                ws.Cells[r, 5].Value = p.EmojisPerMessage;
+                ws.Cells[r, 6].Value = p.MediaPerMessage;
+                ws.Cells[r, 7].Value = p.FrequenceCorujão;
+                ws.Cells[r, 8].Value = p.FrequenceMorning;
+                ws.Cells[r, 9].Value = p.FrequenceAfternoon;
+                ws.Cells[r, 10].Value = p.FrequenceNight;
+                ws.Cells[r, 11].Value = p.DaysPresent;
+                r++;
             }
+            var wsWords = excelFile.Workbook.Worksheets.Add("Palavras Comuns");
+            wsWords.Cells[1, 1].Value = "Palavras mais comuns";
+
+            //Header
+            wsWords.Cells[3, 1].Value = "Palavra";
+            wsWords.Cells[3, 2].Value = "Frequência";
+
+            r = 4;
+            foreach (var item in popularWords.OrderByDescending(kv => kv.Value))
+            {
+                wsWords.Cells[r, 1].Value = item.Key;
+                wsWords.Cells[r, 2].Value = item.Value;
+                r++;
+            }
+
+            var fi = new FileInfo(file);
+            var outFile = Path.Combine(fi.DirectoryName, fi.Name + ".out.xlsx");
+            excelFile.SaveAs(new FileInfo(outFile));
+
+
+
+            Console.WriteLine($"Resultados em '{outFile}'");
         }
 
-        private static int ParseParameters(string[] args, out string lang, out string reportFormat, out string fileName, out FileFormat platform)
+        private static int ParseParameters(string[] args, out Language lang, out ReportFormat reportFormat, out string fileName, out Platform platform)
         {
-            lang = "pt";
-            reportFormat = "excel";
+            lang = Language.Pt;
+            reportFormat = ReportFormat.Excel;
             fileName = null;
-            platform = FileFormat.WhatsApp;
+            platform = Platform.WhatsApp;
 
             if (args.Length >= 1)
             {
@@ -298,7 +294,7 @@ namespace WhatsAppGroupAnalysis
                 return 1;
             }
 
-            for (int i = 1; i < args.Length; i++)
+            for (var i = 1; i < args.Length; i++)
             {
                 var p = args[i];
 
@@ -308,9 +304,10 @@ namespace WhatsAppGroupAnalysis
                     switch (langCode)
                     {
                         case "pt":
+                            lang = Language.Pt;
                             break;
                         case "en":
-                            lang = "en";
+                            lang = Language.En;
                             break;
                         default:
                             Console.WriteLine($"Linguagem {langCode} não suportada");
@@ -325,12 +322,12 @@ namespace WhatsAppGroupAnalysis
                         case "tsv":
                         case "txt":
                         case "text":
-                            reportFormat = "tsv";
+                            reportFormat = ReportFormat.TabSeparated;
                             break;
                         case "xls":
                         case "xlsx":
                         case "excel":
-                            reportFormat = "excel";
+                            reportFormat = ReportFormat.Excel;
                             break;
                         default:
                             Console.WriteLine($"Formato {formatString} não suportado");
@@ -345,14 +342,14 @@ namespace WhatsAppGroupAnalysis
                     {
                         case "whatsapp":
                         case "ws":
-                            platform = FileFormat.WhatsApp;
+                            platform = Platform.WhatsApp;
                             break;
                         case "google_meet":
                         case "google-meet":
                         case "googlemeet":
                         case "google":
                         case "meet":
-                            platform = FileFormat.GoogleMeet;
+                            platform = Platform.GoogleMeet;
                             break;
                         default:
                             Console.WriteLine($"Formato {formatString} não suportado");
