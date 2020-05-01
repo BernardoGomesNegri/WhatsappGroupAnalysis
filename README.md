@@ -17,7 +17,8 @@ Define o formato do arquivo. Valores aceitos: "tsv", "txt", "text", "xls", "xlsx
 
 lang:
 
-Define a linguagem da conversa (a linguagem do dispositivo que obteve o arquivo da conversa). Valores aceitos: "en", "pt".
+Define a linguagem da conversa (a linguagem do dispositivo que obteve o arquivo da conversa).
+ Valores aceitos: "en", "pt".
 
 ## Observações
 

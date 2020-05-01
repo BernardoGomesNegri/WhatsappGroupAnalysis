@@ -9,8 +9,8 @@ using System.Text.RegularExpressions;
 
 namespace WhatsAppGroupAnalysis
 {
-
-
+    
+    
     class Program
     {
         public static string LangString = "<Arquivo de mídia oculto>";
@@ -20,13 +20,14 @@ namespace WhatsAppGroupAnalysis
         public static string LangDateFormat = "dd/MM/yyyy HH:mm";
 
         private static CultureInfo LangCulture = CultureInfo.GetCultureInfo("pt-br");
+
         static int Main(string[] args)
         {
             try
             {
 
                 //Checa língua
-                int res = ParseParameters(args, out var lang, out var reportFormat, out var file);
+                int res = ParseParameters(args, out var lang, out var reportFormat, out var file, out var fileFormat);
                 if (res != 0)
                 {
                     return res;
@@ -280,11 +281,12 @@ namespace WhatsAppGroupAnalysis
             }
         }
 
-        private static int ParseParameters(string[] args, out string lang, out string reportFormat, out string fileName)
+        private static int ParseParameters(string[] args, out string lang, out string reportFormat, out string fileName, out FileFormat platform)
         {
             lang = "pt";
             reportFormat = "excel";
             fileName = null;
+            platform = FileFormat.WhatsApp;
 
             if (args.Length >= 1)
             {
@@ -329,6 +331,28 @@ namespace WhatsAppGroupAnalysis
                         case "xlsx":
                         case "excel":
                             reportFormat = "excel";
+                            break;
+                        default:
+                            Console.WriteLine($"Formato {formatString} não suportado");
+                            return 4;
+                    }
+                }
+
+                else if (p.Substring(0, 9).ToLowerInvariant() == "platform:")
+                {
+                    var formatString = p.Substring(7).ToLowerInvariant();
+                    switch (formatString)
+                    {
+                        case "whatsapp":
+                        case "ws":
+                            platform = FileFormat.WhatsApp;
+                            break;
+                        case "google_meet":
+                        case "google-meet":
+                        case "googlemeet":
+                        case "google":
+                        case "meet":
+                            platform = FileFormat.GoogleMeet;
                             break;
                         default:
                             Console.WriteLine($"Formato {formatString} não suportado");
