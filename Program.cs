@@ -1,11 +1,13 @@
 ﻿using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
 
 namespace WhatsAppGroupAnalysis
 {
@@ -24,27 +26,37 @@ namespace WhatsAppGroupAnalysis
                 var langString = "<Arquivo de mídia oculto>";
                 var langRegex = @"\d\d/\d\d/\d{4}\s\d\d:\d\d\s-\s";
                 var langDateFormat = "dd/MM/yyyy HH:mm";
-
+                var startOfWhoAndWhatSeparator = " - ";
+                
                 //Checa língua
-                var res = ParseParameters(args, out var lang, out var reportFormat, out var file, out var fileFormat);
+                var res = ParseParameters(args, out var lang, out var reportFormat, out var file, out var platform);
                 if (res != 0)
                 {
                     return res;
                 }
 
-                switch (lang)
+                if (platform == Platform.WhatsApp)
                 {
-                    case Language.Pt:
-                        break;
-                    case Language.En:
-                        langString = "<Media omitted>";
-                        langRegex = @"\d{1,2}\/\d{1,2}\/\d\d,\s\d{1,2}:\d{2}\s[A,P]M\s-\s";
-                        langDateFormat = "M/d/yy, h:mm tt";
-                        _langCulture = CultureInfo.GetCultureInfo("en-us");
-                        break;
+                    switch (lang)
+                    {
+                        case Language.Pt:
+                            break;
+                        case Language.En:
+                            langString = "<Media omitted>";
+                            langRegex = @"\d{1,2}\/\d{1,2}\/\d\d,\s\d{1,2}:\d{2}\s[A,P]M\s-\s";
+                            langDateFormat = "M/d/yy, h:mm tt";
+                            _langCulture = CultureInfo.GetCultureInfo("en-us");
+                            break;
+                    }
+                }
+                else
+                {
+                    langRegex = @"\d{2}:\d{2}:\d{2}\.\d{3},\d{2}:\d{2}:\d{2}\.\d{3}";
+                    startOfWhoAndWhatSeparator = "\n";
                 }
 
-                var lines = File.ReadAllLines(file, Encoding.UTF8);
+                var lines = GetLines(file, platform);
+
                 Console.WriteLine($"Lidas {lines.Length} linhas.");
 
                 var regex = new Regex(langRegex, RegexOptions.Compiled);
@@ -70,9 +82,10 @@ namespace WhatsAppGroupAnalysis
                     else if (regex.IsMatch(currentText))
                     {
                         // Achei um novo registro!
-                        var startOfWhoAndWhat = currentText.IndexOf(" - ", StringComparison.Ordinal);
+                        
+                        var startOfWhoAndWhat = currentText.IndexOf(startOfWhoAndWhatSeparator, StringComparison.Ordinal);
 
-                        var whoAndWhat = currentText.Substring(startOfWhoAndWhat + 3);
+                        var whoAndWhat = currentText.Substring(startOfWhoAndWhat + startOfWhoAndWhatSeparator.Length);
                         var posSeparator = whoAndWhat.IndexOf(':');
                         if (posSeparator > 0)
                         {
@@ -86,9 +99,25 @@ namespace WhatsAppGroupAnalysis
                                 sentences.Add(currentSentence);
                             }
 
+                            DateTime moment;
+                            if (platform == Platform.WhatsApp)
+                            {
+                                moment = DateTime.ParseExact(currentText.Substring(0, startOfWhoAndWhat),
+                                    langDateFormat, _langCulture);
+                                
+                            }
+                            else
+                            {
+                                Debug.Assert(platform == Platform.GoogleMeet);
+
+                                var m = DateTime.ParseExact(currentText.Substring(0, 8), "HH:mm:ss", _langCulture);
+                                var t = DateTime.Today;
+                                moment = new DateTime(t.Year, t.Month, t.Day, m.Hour, m.Minute, m.Second, DateTimeKind.Unspecified);
+                            }
+
                             currentSentence = new Sentence
                             {
-                                Moment = DateTime.ParseExact(currentText.Substring(0, startOfWhoAndWhat), langDateFormat, _langCulture),
+                                Moment = moment,
                                 Who = who,
                                 What = what
                             };
@@ -199,6 +228,18 @@ namespace WhatsAppGroupAnalysis
                 return 1000;
             }
             return 0;
+        }
+
+        private static string[] GetLines(string fileName, Platform platform)
+        {
+            if (platform == Platform.WhatsApp)
+            {
+                return File.ReadAllLines(fileName, Encoding.UTF8);
+            }
+
+            Debug.Assert(platform == Platform.GoogleMeet);
+
+            return GoogleData.GetLines(fileName, Encoding.UTF8);
         }
 
         private static void ExportTsv(List<Person> persons, string file)
@@ -337,7 +378,7 @@ namespace WhatsAppGroupAnalysis
 
                 else if (p.Substring(0, 9).ToLowerInvariant() == "platform:")
                 {
-                    var formatString = p.Substring(7).ToLowerInvariant();
+                    var formatString = p.Substring(9).ToLowerInvariant();
                     switch (formatString)
                     {
                         case "whatsapp":
@@ -352,8 +393,8 @@ namespace WhatsAppGroupAnalysis
                             platform = Platform.GoogleMeet;
                             break;
                         default:
-                            Console.WriteLine($"Formato {formatString} não suportado");
-                            return 4;
+                            Console.WriteLine($"Plataforma {formatString} não suportada");
+                            return 5;
                     }
                 }
             }
