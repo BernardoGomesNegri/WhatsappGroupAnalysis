@@ -1,16 +1,20 @@
 # WhatsappGroupAnalysis
 
-Esse programa analisa conversa de grupos de Whatsapp e Google Meet e retorna métricas sobre:
+Esse programa analisa conversa de grupos de Whatsapp e Google Meet e retorna mÃ©tricas sobre:
 
 * Pessoas que mais participam
-* Pessoas que enviam mais mídia (fotos, figurinhas)
+* Pessoas que enviam mais mÃ­dia (fotos, figurinhas)
 * Uso de emoji nas conversas
-* Número de letras por palavras
-* Horário das mensagens
+* NÃºmero de letras por palavras
+* HorÃ¡rio das mensagens
 * Palavras por mensagens
 * etc.
 
-## Opções de linha de comando
+##InstalaÃ§Ã£o
+
+Extraia o arquivo de acordo com seu sistema operacional nas [releases](https://github.com/BernardoGomesNegri/WhatsappGroupAnalysis/releases) e rode o arquivo executÃ¡vel pela linha de comando como descrito abaixo.
+
+## OpÃ§Ãµes de linha de comando
 format:
 
 Define o formato do arquivo. Valores aceitos: "tsv", "txt", "text", "xls", "xlsx", "excel"
@@ -22,14 +26,14 @@ Define a linguagem da conversa (a linguagem do dispositivo que obteve o arquivo 
 
 platform:
 
-Define a fonte do arquivo de conversas, se é do Google Meet ou Whatsapp. Valores aceitos: "whatsapp",
+Define a fonte do arquivo de conversas, se Ã© do Google Meet ou Whatsapp. Valores aceitos: "whatsapp",
 "ws", "google-meet", "google_meet", "google"
 
-## Observações
+## ObservaÃ§Ãµes
 
-Só funciona em língua portuguesa e inglesa (americana)
+SÃ³ funciona em lÃ­ngua portuguesa e inglesa (americana)
 
 ## Futuro
 
-* Análise de sentimento
-* Suporte de mais línguas
+* AnÃ¡lise de sentimento
+* Suporte de mais lÃ­nguas
