@@ -10,7 +10,7 @@ Esse programa analisa conversa de grupos de Whatsapp e Google Meet e retorna mé
 * Palavras por mensagens
 * etc.
 
-##Instalação
+## Instalação
 
 Extraia o arquivo de acordo com seu sistema operacional nas [releases](https://github.com/BernardoGomesNegri/WhatsappGroupAnalysis/releases) e rode o arquivo executável pela linha de comando como descrito abaixo.
 
