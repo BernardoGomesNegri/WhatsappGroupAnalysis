@@ -51,7 +51,7 @@ namespace WhatsAppGroupAnalysis
                 }
                 else
                 {
-                    langRegex = @"\d{2}:\d{2}:\d{2}\.\d{3},\d{2}:\d{2}:\d{2}\.\d{3}";
+                    langRegex = @"\d{1,2}:\d{1,2}:\d{1,2}\.\d*,\d{1,2}:\d{1,2}:\d{1,2}\.\d*";
                     startOfWhoAndWhatSeparator = "\n";
                 }
 
@@ -110,7 +110,9 @@ namespace WhatsAppGroupAnalysis
                             {
                                 Debug.Assert(platform == Platform.GoogleMeet);
 
-                                var m = DateTime.ParseExact(currentText.Substring(0, 8), "HH:mm:ss", _langCulture);
+                                var commaPos = currentText.IndexOf(',');
+                                var s = currentText.Substring(0, commaPos);
+                                var m = DateTime.ParseExact(s, "H:m:s.FFF", _langCulture);
                                 var t = DateTime.Today;
                                 moment = new DateTime(t.Year, t.Month, t.Day, m.Hour, m.Minute, m.Second, DateTimeKind.Unspecified);
                             }
