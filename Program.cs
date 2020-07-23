@@ -11,8 +11,8 @@ using OfficeOpenXml.FormulaParsing.Excel.Functions.DateTime;
 
 namespace WhatsAppGroupAnalysis
 {
-    
-    
+
+
     class Program
     {
        
@@ -161,7 +161,15 @@ namespace WhatsAppGroupAnalysis
                     }
                 }
 
-                Console.WriteLine($"{sentences.Count} sentenças lidas.");
+                //Checa se o número de sentenças foi maior que 1
+                if (sentences.Count < 2)
+                {
+                    new Error(ErrorType.FileInvalid);
+                }
+                else
+                {
+                    Console.WriteLine($"{sentences.Count} sentenças lidas.");
+                }
 
                 // Distintas Pessoas e o número de sentenças
                 var byPerson = sentences.GroupBy(s => s.Who.ToLowerInvariant()).OrderByDescending(g => g.Count()).ToArray();
@@ -226,6 +234,7 @@ namespace WhatsAppGroupAnalysis
             }
             catch (Exception ex)
             {
+                new Error(ErrorType.Undefined);
                 Console.WriteLine(ex);
                 return 1000;
             }
@@ -234,6 +243,17 @@ namespace WhatsAppGroupAnalysis
 
         private static string[] GetLines(string fileName, Platform platform)
         {
+            // Vê se o programa tem permissões de leitura e se o arquivo existe.
+            var fileInfo = new FileInfo(fileName);
+            if (!fileInfo.Exists)
+            {
+                new Error(ErrorType.FilePath);
+            }
+            if (fileInfo.IsReadOnly)
+            {
+                new Error(ErrorType.FilePermission);
+            }
+
             if (platform == Platform.WhatsApp)
             {
                 return File.ReadAllLines(fileName, Encoding.UTF8);
@@ -333,7 +353,7 @@ namespace WhatsAppGroupAnalysis
             }
             else
             {
-                Console.WriteLine("O primeiro parâmetro deve ser o caminho do arquivo");
+                new Error(ErrorType.FilePath, lang);
                 return 1;
             }
 
@@ -354,6 +374,7 @@ namespace WhatsAppGroupAnalysis
                             break;
                         default:
                             Console.WriteLine($"Linguagem {langCode} não suportada");
+                            new Error(ErrorType.ParametersInvalid, lang);
                             return 3;
                     }
                 }
@@ -374,6 +395,7 @@ namespace WhatsAppGroupAnalysis
                             break;
                         default:
                             Console.WriteLine($"Formato {formatString} não suportado");
+                            new Error(ErrorType.ParametersInvalid, lang);
                             return 4;
                     }
                 }
@@ -396,6 +418,7 @@ namespace WhatsAppGroupAnalysis
                             break;
                         default:
                             Console.WriteLine($"Plataforma {formatString} não suportada");
+                            new Error(ErrorType.ParametersInvalid, lang);
                             return 5;
                     }
                 }
